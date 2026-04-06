@@ -1,0 +1,39 @@
+% DC Motor Parameters
+J = 0.01; b = 0.1; K = 0.01; R = 1; L = 0.5;
+
+% Plant TF
+s = tf('s');
+plant = K / ((J*s + b)*(L*s + R) + K^2);
+disp('Plant TF:'); disp(plant);
+
+t = 0:0.003:3;
+
+% Controllers
+Kp = 100; Ki = 200; Kd = 10;
+P   = pid(Kp, 0, 0);
+PI  = pid(Kp, Ki, 0);
+PID = pid(Kp, Ki, Kd);
+
+% Closed-loop systems
+sys_p   = feedback(plant * P,   1);
+sys_pi  = feedback(plant * PI,  1);
+sys_pid = feedback(plant * PID, 1);
+
+% Step responses
+[y_open, t_open] = step(plant, t);
+[y_p,   ~]       = step(sys_p,   t);
+[y_pi,  ~]       = step(sys_pi,  t);
+[y_pid, ~]       = step(sys_pid, t);
+
+% Plot
+figure('Position',[100 100 1200 600]);
+plot(t_open, y_open, 'k--', 'LineWidth',2, 'DisplayName','Open Loop');
+hold on;
+plot(t, y_p,   'b-', 'LineWidth',2, 'DisplayName','P Controller');
+plot(t, y_pi,  'g-', 'LineWidth',2, 'DisplayName','PI Controller');
+plot(t, y_pid, 'r-', 'LineWidth',2, 'DisplayName','PID Controller');
+plot(t, ones(size(t)), 'k:', 'LineWidth',1.5, 'DisplayName','Reference (1 rad/s)');
+title('DC Motor Speed Control - Step Response Comparison');
+xlabel('Time (seconds)'); ylabel('Angular Speed \omega (rad/s)');
+legend('Location','best'); grid on;
+saveas(gcf, 'dc_motor_speed_response_comparison_matlab.png');
